@@ -68,7 +68,7 @@ public class Finder {
     ManagedExecutor executor;
 
     @Inject
-    BuildConfig config;
+    BuildConfig defaultConfig;
 
     @Inject
     Provider<BasicCacheContainer> cacheProvider;
@@ -84,7 +84,7 @@ public class Finder {
 
     @PostConstruct
     public void init() {
-        if (Boolean.FALSE.equals(config.getDisableCache())) {
+        if (Boolean.FALSE.equals(defaultConfig.getDisableCache())) {
             cacheManager = cacheProvider.get();
             LOGGER.info("Initialized cache {}", cacheManager);
         } else {
@@ -226,7 +226,7 @@ public class Finder {
         // - run async
         // Consider using dir/id{8}-urlHash{8}
         /*
-         * boolean isClean = cleaner.cleanup(this.config.getOutputDirectory());
+         * boolean isClean = cleaner.cleanup(config.getOutputDirectory());
          *
          * if (isClean) { LOGGER.info("Cleanup after finding URL: {}", url); } else {
          * LOGGER.warn("Cleanup failed after finding URL: {}", url); }
@@ -242,17 +242,17 @@ public class Finder {
             Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
 
-        URL pncURL = config.getPncURL();
+        URL pncURL = defaultConfig.getPncURL();
 
-        try (PncClient pncClient = pncURL != null ? new PncClientImpl(config) : null) {
+        try (PncClient pncClient = pncURL != null ? new PncClientImpl(defaultConfig) : null) {
             BuildFinder buildFinder;
 
             if (pncClient == null) {
                 LOGGER.warn("Initializing Build Finder with PNC support disabled because PNC URL is not set");
-                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager);
+                buildFinder = new BuildFinder(kojiSession, defaultConfig, analyzer, cacheManager);
             } else {
                 LOGGER.info("Initializing Build Finder PNC client with URL {}", pncURL);
-                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager, pncClient);
+                buildFinder = new BuildFinder(kojiSession, defaultConfig, analyzer, cacheManager, pncClient);
             }
 
             buildFinder.setListener(buildFinderListener);
