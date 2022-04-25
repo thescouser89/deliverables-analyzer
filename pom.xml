@@ -24,6 +24,9 @@
     <artifactId>jboss-parent</artifactId>
     <version>39</version>
   </parent>
+<!--
+test
+-->
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
   <artifactId>deliverables-analyzer</artifactId>
