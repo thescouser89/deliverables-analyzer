@@ -25,7 +25,9 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
 
@@ -33,8 +35,10 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.LicenseInfo;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
+import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.Checksum;
@@ -58,6 +62,52 @@ public final class FinderResultCreator {
                 .notFoundArtifacts(getNotFoundArtifacts(builds))
                 .builds(getFoundBuilds(builds))
                 .build();
+    }
+
+    private static void setLicenseInformation(Artifact.ArtifactBuilder builder, KojiLocalArchive localArchive) {
+        Set<LicenseInfo> licenses = Optional.ofNullable(localArchive.getLicenses())
+                .orElse(Collections.emptySet())
+                .stream()
+                .map(FinderResultCreator::toDTO)
+                .collect(Collectors.toSet());
+
+        builder.licenses(licenses);
+    }
+
+    private static LicenseInfo toDTO(org.jboss.pnc.build.finder.core.LicenseInfo license) {
+        LicenseInfo.LicenseInfoBuilder licenseBuilder = LicenseInfo.builder()
+                .comments(license.getComments())
+                .distribution(license.getDistribution())
+                .name(license.getName())
+                .spdxLicenseId(license.getSpdxLicenseId())
+                .url(license.getUrl());
+
+        org.jboss.pnc.build.finder.core.LicenseSource source = license.getSource();
+        if (source == null) {
+            throw new IllegalArgumentException("License source cannot be null");
+        }
+
+        switch (source) {
+            case UNKNOWN:
+                licenseBuilder.source(LicenseSource.UNKNOWN);
+                break;
+            case POM:
+                licenseBuilder.source(LicenseSource.POM);
+                break;
+            case POM_XML:
+                licenseBuilder.source(LicenseSource.POM_XML);
+                break;
+            case BUNDLE_LICENSE:
+                licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
+                break;
+            case TEXT:
+                licenseBuilder.source(LicenseSource.TEXT);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown license source " + source);
+        }
+
+        return licenseBuilder.build();
     }
 
     private static void setCommonArtifactFields(Artifact.ArtifactBuilder builder, KojiLocalArchive archive) {
@@ -108,6 +158,9 @@ public final class FinderResultCreator {
             localArchive.getArchive().setFilename(filename);
 
             setCommonArtifactFields(builder, localArchive);
+            // Add the new license information provided by Build Finder
+            setLicenseInformation(builder, localArchive);
+
             builder.archiveFilenames(List.of(filename)).archiveUnmatchedFilenames(localArchive.getUnmatchedFilenames());
 
             artifacts.add(builder.build());
@@ -196,6 +249,9 @@ public final class FinderResultCreator {
         builder.builtFromSource(localArchive.isBuiltFromSource() && !imported);
 
         setCommonArtifactFields(builder, localArchive);
+        // Add the new license information provided by Build Finder
+        setLicenseInformation(builder, localArchive);
+
         builder.archiveFilenames(localArchive.getFilenames())
                 .archiveUnmatchedFilenames(localArchive.getUnmatchedFilenames());
 
