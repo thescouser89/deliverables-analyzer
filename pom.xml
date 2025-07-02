@@ -63,6 +63,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <skipITs>true</skipITs>
+    <version.central-publishing-maven-plugin>0.8.0</version.central-publishing-maven-plugin>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
     <version.com.fasterxml.jackson>2.19.1</version.com.fasterxml.jackson>
     <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
@@ -103,7 +104,6 @@
     <version.org.jboss.pnc.pnc>3.1.5</version.org.jboss.pnc.pnc>
     <version.org.jboss.pnc.pnc-api>3.2.0</version.org.jboss.pnc.pnc-api>
     <version.org.junit-pioneer>2.3.0</version.org.junit-pioneer>
-    <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.7.0</version.org.sonatype.plugins.nexus-staging-maven-plugin>
     <version.org.wiremock>3.13.1</version.org.wiremock>
   </properties>
 
@@ -763,7 +763,6 @@ limitations under the License.]]></inlineHeader>
           <tagNameFormat>@{project.version}</tagNameFormat>
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <releaseProfiles>empty-javadoc-jar,gpg-sign</releaseProfiles>
-          <stagingRepository>https://oss.sonatype.org/service/local/staging/deploy/maven2/</stagingRepository>
         </configuration>
       </plugin>
       <plugin>
@@ -780,15 +779,13 @@ limitations under the License.]]></inlineHeader>
         <artifactId>buildnumber-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>${version.org.sonatype.plugins.nexus-staging-maven-plugin}</version>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>${version.central-publishing-maven-plugin}</version>
         <extensions>true</extensions>
         <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>false</autoReleaseAfterClose>
-          <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+            <!-- as defined in your settings.xml -->
+            <publishingServerId>central-publisher</publishingServerId>
         </configuration>
       </plugin>
       <plugin>
