@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
 import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
@@ -51,6 +52,9 @@ public class BuildLookupConsumer {
 
     private static final String EMPTY_FILE_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     private static final String EMPTY_ZIP_SHA256 = "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85";
+
+    @Inject
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     PncBuildFinder pncBuildFinder;
@@ -123,12 +127,19 @@ public class BuildLookupConsumer {
 
             // Koji Lookup
             if (!unresolvedBatch.isEmpty()) {
-                try {
-                    processLookup(path, unresolvedBatch, globalResults, kojiBuildFinder::findBuilds);
-                } catch (Exception e) {
-                    if (e instanceof CancellationException || e instanceof ReasonedException)
-                        throw e;
-                    throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Koji Lookup failed for path: " + path, e);
+                if (analyzerConfig.disableKojiLookup()) {
+                    LOGGER.debug("Koji lookup is disabled, skipping.");
+                } else {
+                    try {
+                        processLookup(path, unresolvedBatch, globalResults, kojiBuildFinder::findBuilds);
+                    } catch (Exception e) {
+                        if (e instanceof CancellationException || e instanceof ReasonedException)
+                            throw e;
+                        throw new ReasonedException(
+                                ResultStatus.SYSTEM_ERROR,
+                                "Koji Lookup failed for path: " + path,
+                                e);
+                    }
                 }
             }
 

@@ -34,6 +34,9 @@ public interface AnalyzerConfig {
     @WithDefault("false")
     boolean disableRecursion();
 
+    @WithDefault("false")
+    boolean disableKojiLookup();
+
     @WithDefault("dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip,rpm")
     List<String> archiveExtensions();
 
